@@ -2,7 +2,7 @@
 
 React frontend for **JobConnect**, a job portal where recruiters post jobs and job seekers search and apply.
 
-> **Status:** Phase 1 (scaffold). App shell with routing, layout and an API connection check; features are added phase by phase (see [Roadmap](#roadmap)).
+> **Status:** Phase 2 (authentication). Register, log in, log out, and role-based dashboards behind protected routes; features are added phase by phase (see [Roadmap](#roadmap)).
 
 Backend repo: [jobconnect-backend](https://github.com/sudhan-murugan/jobconnect-backend)
 
@@ -10,10 +10,39 @@ Backend repo: [jobconnect-backend](https://github.com/sudhan-murugan/jobconnect-
 
 - **React 19** with **Vite** (dev server and build)
 - **React Router** for client-side routing
-- **Axios** for HTTP requests (one shared instance in `src/services/api.js`)
+- **Axios** for HTTP requests (one shared instance in `src/services/api.js`, with a JWT interceptor)
+- **React Context** for auth state (`AuthProvider` + `useAuth()` hook)
 - **Tailwind CSS v4** for responsive styling
 - **ESLint** for linting
-- **Planned:** React Context for auth state, React Testing Library
+- **Planned:** React Testing Library
+
+## Features so far
+
+- Sign up as a **job seeker** or a **recruiter**, log in, log out
+- Session survives page reloads (token saved, user restored via `GET /api/auth/me`)
+- Protected routes: logged-out visitors are sent to login, then back to the page they wanted
+- Role-based routes: each role has its own dashboard; other roles see a 403 page
+- Form validation messages from the API shown under the matching field
+- Expired or invalid tokens log the user out automatically
+
+## Routes
+
+| Path                   | Who can see it         |
+| ---------------------- | ---------------------- |
+| `/`                    | Everyone               |
+| `/login`, `/register`  | Logged-out visitors    |
+| `/seeker/dashboard`    | Job seekers            |
+| `/recruiter/dashboard` | Recruiters             |
+
+## How auth works
+
+1. `LoginPage` / `RegisterPage` call `login()` / `register()` from `useAuth()`.
+2. `AuthProvider` sends the request, saves the returned JWT in `localStorage`, and stores the user in React state.
+3. The Axios request interceptor adds `Authorization: Bearer <token>` to every API call.
+4. Route guards in `src/routes/` read the auth state: `ProtectedRoute` (must be logged in), `RoleRoute` (must have the right role) and `GuestRoute` (must be logged out).
+5. If the API ever answers 401, the response interceptor clears the session and protected pages redirect to login.
+
+Route guards only control what the UI shows. The backend enforces the same rules on every request.
 
 ## Getting started
 
@@ -55,12 +84,13 @@ Vite bakes `VITE_*` variables into the JavaScript bundle at build time, so they 
 
 ```
 src/
-  components/  shared UI (Layout, Navbar, Footer, ApiStatus)
-  context/     React Context providers (AuthContext, Phase 2)
-  hooks/       custom React hooks
-  pages/       one component per route (HomePage, NotFoundPage)
-  routes/      route guards (ProtectedRoute, RoleRoute, Phase 2)
-  services/    api.js: Axios instance for the backend
+  components/  shared UI (Layout, Navbar, Footer, Button, FormField, Alert, Spinner...)
+  context/     AuthContext + AuthProvider (logged-in user, login/register/logout)
+  hooks/       custom hooks (useAuth)
+  pages/       one component per route (Home, Login, Register, dashboards, 404, 403)
+  routes/      route guards (ProtectedRoute, RoleRoute, GuestRoute)
+  services/    api.js (Axios + interceptors), authService.js, tokenStorage.js
+  utils/       roles and helpers
   App.jsx      route definitions
   main.jsx     entry point, mounts <App /> into index.html
 ```
@@ -68,7 +98,7 @@ src/
 ## Roadmap
 
 1. ✅ Scaffold: Vite + React + React Router, layout, Axios service
-2. Authentication: register/login pages, AuthContext, protected routes
+2. ✅ Authentication: register/login pages, AuthContext, protected routes
 3. Jobs backend
 4. Jobs UI: list, search/filter, detail, recruiter post/edit
 5. Applications: apply, dashboards for job seekers and recruiters

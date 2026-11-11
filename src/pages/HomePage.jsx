@@ -1,4 +1,12 @@
-// Placeholder landing page. Job search arrives in Phase 4.
+// Landing page. Job search arrives in Phase 4.
+import { Link } from 'react-router'
+import { useAuth } from '../hooks/useAuth.js'
+import { dashboardPathFor } from '../utils/roles.js'
+
+const PRIMARY_BUTTON =
+  'rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700'
+const SECONDARY_BUTTON =
+  'rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-300 ring-inset hover:bg-slate-50'
 
 // Keeping content in an array and rendering it with .map() avoids repeating markup.
 const FEATURES = [
@@ -17,6 +25,8 @@ const FEATURES = [
 ]
 
 export default function HomePage() {
+  const { user, isLoading } = useAuth()
+
   return (
     <>
       <section className="py-10 text-center sm:py-16">
@@ -27,6 +37,26 @@ export default function HomePage() {
           JobConnect brings recruiters and job seekers together. Search openings, apply with your
           resume, and track every application in one place.
         </p>
+
+        {/* Conditional rendering: show different buttons depending on login state. */}
+        {!isLoading && (
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            {user ? (
+              <Link to={dashboardPathFor(user.role)} className={PRIMARY_BUTTON}>
+                Go to your dashboard
+              </Link>
+            ) : (
+              <>
+                <Link to="/register" className={PRIMARY_BUTTON}>
+                  Create an account
+                </Link>
+                <Link to="/login" className={SECONDARY_BUTTON}>
+                  Log in
+                </Link>
+              </>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="grid gap-4 sm:grid-cols-3">
