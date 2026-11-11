@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { getJobs } from '../services/jobService.js'
+import { getMyJobs } from '../services/jobService.js'
 import { useFetch } from '../hooks/useFetch.js'
-import { useAuth } from '../hooks/useAuth.js'
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 import { useFlashMessage } from '../hooks/useFlashMessage.js'
 import { formatFullDate, formatPostedDate } from '../utils/jobs.js'
@@ -19,10 +18,16 @@ const PRIMARY_LINK =
   'inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700'
 const ACTION_LINK = 'rounded-md px-2.5 py-1.5 text-sm font-medium hover:bg-slate-100'
 
-// Recruiter home: the jobs they posted, with edit/delete. Applicants come in Phase 5.
+// { total: 3, shortlisted: 1, ... } -> "3 applicants · 1 shortlisted"
+function formatApplicantCounts({ total, shortlisted }) {
+  if (total === 0) return 'No applicants yet'
+  const applicants = `${total} ${total === 1 ? 'applicant' : 'applicants'}`
+  return shortlisted > 0 ? `${applicants} · ${shortlisted} shortlisted` : applicants
+}
+
+// Recruiter home: the jobs they posted, with applicant counts, edit and delete.
 export default function RecruiterDashboardPage() {
   useDocumentTitle('Dashboard')
-  const { user } = useAuth()
   const flash = useFlashMessage() // e.g. "Job deleted." after deleting from the job page
   const [searchParams] = useSearchParams()
   const page = Math.max(1, Number.parseInt(searchParams.get('page'), 10) || 1)
@@ -30,10 +35,10 @@ export default function RecruiterDashboardPage() {
   const [jobToDelete, setJobToDelete] = useState(null)
   const [deletedTitle, setDeletedTitle] = useState('')
 
-  // postedBy filters the public jobs list down to this recruiter's own jobs.
+  // GET /api/jobs/mine: this recruiter's jobs, each with applicationCounts.
   const fetchMyJobs = useCallback(
-    (signal) => getJobs({ postedBy: user._id, page, limit: PAGE_SIZE }, { signal }),
-    [user._id, page],
+    (signal) => getMyJobs({ page, limit: PAGE_SIZE }, { signal }),
+    [page],
   )
   const { data, error, isLoading, reload } = useFetch(fetchMyJobs)
 
@@ -97,10 +102,16 @@ export default function RecruiterDashboardPage() {
                       posted {formatPostedDate(job.createdAt)}
                     </time>
                   </p>
+                  <Link
+                    to={`/recruiter/jobs/${job._id}/applicants`}
+                    className="mt-1 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    {formatApplicantCounts(job.applicationCounts)}
+                  </Link>
                 </div>
                 <div className="flex shrink-0 gap-1">
-                  <Link to={`/jobs/${job._id}`} className={`${ACTION_LINK} text-slate-700`}>
-                    View
+                  <Link to={`/recruiter/jobs/${job._id}/applicants`} className={`${ACTION_LINK} text-slate-700`}>
+                    Applicants
                   </Link>
                   <Link to={`/recruiter/jobs/${job._id}/edit`} className={`${ACTION_LINK} text-indigo-700`}>
                     Edit

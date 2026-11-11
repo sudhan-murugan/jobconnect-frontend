@@ -12,6 +12,7 @@ import SkillList from '../components/SkillList.jsx'
 import Alert from '../components/Alert.jsx'
 import Button from '../components/Button.jsx'
 import DeleteJobDialog from '../components/DeleteJobDialog.jsx'
+import ApplyPanel from '../components/ApplyPanel.jsx'
 import { PageLoader } from '../components/Spinner.jsx'
 import { EmptyState, ErrorState } from '../components/StatusMessage.jsx'
 
@@ -120,7 +121,16 @@ export default function JobDetailPage() {
             <div className="mt-6 space-y-2">
               {isOwner ? (
                 <>
-                  <Link to={`/recruiter/jobs/${job._id}/edit`} className={`${LINK_BUTTON} bg-indigo-600 text-white hover:bg-indigo-700`}>
+                  <Link
+                    to={`/recruiter/jobs/${job._id}/applicants`}
+                    className={`${LINK_BUTTON} bg-indigo-600 text-white hover:bg-indigo-700`}
+                  >
+                    View applicants
+                  </Link>
+                  <Link
+                    to={`/recruiter/jobs/${job._id}/edit`}
+                    className={`${LINK_BUTTON} bg-white text-slate-700 ring-1 ring-slate-300 ring-inset hover:bg-slate-50`}
+                  >
                     Edit job
                   </Link>
                   <Button variant="danger-outline" className="w-full" onClick={() => setJobToDelete(job)}>
@@ -137,10 +147,7 @@ export default function JobDetailPage() {
                   Log in to apply
                 </Link>
               ) : user.role === ROLES.JOB_SEEKER ? (
-                // Phase 5: the application form goes here.
-                <Button className="w-full" disabled>
-                  Applications open soon
-                </Button>
+                <ApplyPanel job={job} />
               ) : null}
             </div>
           </div>

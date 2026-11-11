@@ -13,6 +13,7 @@ export default function FormField({
   as: Component = 'input',
   children,
   className = '',
+  inputClassName = '',
   ...inputProps
 }) {
   // useId() creates a unique id that stays the same across re-renders.
@@ -33,7 +34,7 @@ export default function FormField({
           error
             ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
             : 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-200'
-        }`}
+        } ${inputClassName}`}
         {...inputProps}
       >
         {children}

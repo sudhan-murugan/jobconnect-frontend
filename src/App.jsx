@@ -14,6 +14,7 @@ import SeekerDashboardPage from './pages/SeekerDashboardPage.jsx'
 import RecruiterDashboardPage from './pages/RecruiterDashboardPage.jsx'
 import PostJobPage from './pages/PostJobPage.jsx'
 import EditJobPage from './pages/EditJobPage.jsx'
+import ApplicantsPage from './pages/ApplicantsPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import { ROLES } from './utils/roles.js'
 
@@ -57,6 +58,7 @@ const router = createBrowserRouter([
               { path: 'recruiter/dashboard', element: <RecruiterDashboardPage /> },
               { path: 'recruiter/jobs/new', element: <PostJobPage /> },
               { path: 'recruiter/jobs/:id/edit', element: <EditJobPage /> },
+              { path: 'recruiter/jobs/:id/applicants', element: <ApplicantsPage /> },
             ],
           },
         ],

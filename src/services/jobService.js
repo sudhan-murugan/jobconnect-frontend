@@ -15,6 +15,13 @@ export async function getJobs(params = {}, { signal } = {}) {
   return data
 }
 
+// The logged-in recruiter's own jobs, each with `applicationCounts`
+// ({ total, applied, shortlisted, rejected }). Returns { jobs, pagination }.
+export async function getMyJobs(params = {}, { signal } = {}) {
+  const { data } = await api.get('/jobs/mine', { params: withoutEmptyValues(params), signal })
+  return data
+}
+
 export async function getJob(id, { signal } = {}) {
   const { data } = await api.get(`/jobs/${id}`, { signal })
   return data.job
