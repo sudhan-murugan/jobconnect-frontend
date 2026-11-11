@@ -1,12 +1,11 @@
-// Landing page. Job search arrives in Phase 4.
-import { Link } from 'react-router'
+// Landing page: a job search box plus a short intro.
+import { createSearchParams, Link, useNavigate } from 'react-router'
 import { useAuth } from '../hooks/useAuth.js'
-import { dashboardPathFor } from '../utils/roles.js'
+import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
+import { dashboardPathFor, ROLES } from '../utils/roles.js'
+import JobSearchForm from '../components/JobSearchForm.jsx'
 
-const PRIMARY_BUTTON =
-  'rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700'
-const SECONDARY_BUTTON =
-  'rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-300 ring-inset hover:bg-slate-50'
+const TEXT_LINK = 'font-semibold text-indigo-600 hover:text-indigo-700'
 
 // Keeping content in an array and rendering it with .map() avoids repeating markup.
 const FEATURES = [
@@ -25,7 +24,15 @@ const FEATURES = [
 ]
 
 export default function HomePage() {
+  useDocumentTitle(null) // just "JobConnect"
   const { user, isLoading } = useAuth()
+  const navigate = useNavigate()
+
+  // Send the search to the jobs page as URL query params, skipping empty ones.
+  function handleSearch({ keyword, location }) {
+    const params = Object.fromEntries(Object.entries({ keyword, location }).filter(([, value]) => value))
+    navigate({ pathname: '/jobs', search: `?${createSearchParams(params)}` })
+  }
 
   return (
     <>
@@ -38,24 +45,40 @@ export default function HomePage() {
           resume, and track every application in one place.
         </p>
 
-        {/* Conditional rendering: show different buttons depending on login state. */}
+        <div className="mx-auto mt-8 max-w-2xl text-left">
+          <JobSearchForm onSearch={handleSearch} />
+        </div>
+
+        {/* Conditional rendering: show different links depending on login state. */}
         {!isLoading && (
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <p className="mt-6 text-sm text-slate-600">
+            <Link to="/jobs" className={TEXT_LINK}>
+              Browse all jobs
+            </Link>
+            <span aria-hidden="true"> · </span>
             {user ? (
-              <Link to={dashboardPathFor(user.role)} className={PRIMARY_BUTTON}>
-                Go to your dashboard
-              </Link>
+              <>
+                <Link to={dashboardPathFor(user.role)} className={TEXT_LINK}>
+                  Go to your dashboard
+                </Link>
+                {user.role === ROLES.RECRUITER && (
+                  <>
+                    <span aria-hidden="true"> · </span>
+                    <Link to="/recruiter/jobs/new" className={TEXT_LINK}>
+                      Post a job
+                    </Link>
+                  </>
+                )}
+              </>
             ) : (
               <>
-                <Link to="/register" className={PRIMARY_BUTTON}>
-                  Create an account
-                </Link>
-                <Link to="/login" className={SECONDARY_BUTTON}>
-                  Log in
+                Hiring?{' '}
+                <Link to="/register" className={TEXT_LINK}>
+                  Create a recruiter account
                 </Link>
               </>
             )}
-          </div>
+          </p>
         )}
       </section>
 

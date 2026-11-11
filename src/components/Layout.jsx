@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router'
+import { Outlet, ScrollRestoration } from 'react-router'
 import Navbar from './Navbar.jsx'
 import Footer from './Footer.jsx'
 
@@ -14,6 +14,9 @@ export default function Layout() {
         </div>
       </main>
       <Footer />
+      {/* Scrolls to the top on each new page, and restores the previous
+          position when going Back, like a traditional multi-page site. */}
+      <ScrollRestoration />
     </div>
   )
 }

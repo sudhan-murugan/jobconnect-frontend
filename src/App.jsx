@@ -6,10 +6,14 @@ import ProtectedRoute from './routes/ProtectedRoute.jsx'
 import RoleRoute from './routes/RoleRoute.jsx'
 import GuestRoute from './routes/GuestRoute.jsx'
 import HomePage from './pages/HomePage.jsx'
+import JobsPage from './pages/JobsPage.jsx'
+import JobDetailPage from './pages/JobDetailPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import SeekerDashboardPage from './pages/SeekerDashboardPage.jsx'
 import RecruiterDashboardPage from './pages/RecruiterDashboardPage.jsx'
+import PostJobPage from './pages/PostJobPage.jsx'
+import EditJobPage from './pages/EditJobPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import { ROLES } from './utils/roles.js'
 
@@ -25,6 +29,10 @@ const router = createBrowserRouter([
     element: <Layout />, // navbar + footer around every page
     children: [
       { index: true, element: <HomePage /> }, // "index" = the parent's own path, "/"
+
+      // Public
+      { path: 'jobs', element: <JobsPage /> },
+      { path: 'jobs/:id', element: <JobDetailPage /> }, // ":id" is a URL parameter, read with useParams()
 
       // Logged-out visitors only
       {
@@ -45,7 +53,11 @@ const router = createBrowserRouter([
           },
           {
             element: <RoleRoute allowedRoles={[ROLES.RECRUITER]} />,
-            children: [{ path: 'recruiter/dashboard', element: <RecruiterDashboardPage /> }],
+            children: [
+              { path: 'recruiter/dashboard', element: <RecruiterDashboardPage /> },
+              { path: 'recruiter/jobs/new', element: <PostJobPage /> },
+              { path: 'recruiter/jobs/:id/edit', element: <EditJobPage /> },
+            ],
           },
         ],
       },

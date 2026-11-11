@@ -1,7 +1,9 @@
 import DashboardHeader from '../components/DashboardHeader.jsx'
+import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 
 // Job seeker home page. The applications list is built in Phase 5.
 export default function SeekerDashboardPage() {
+  useDocumentTitle('Dashboard')
   return (
     <div className="space-y-8">
       <DashboardHeader subtitle="Track the jobs you've applied to." />

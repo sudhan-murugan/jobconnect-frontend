@@ -5,8 +5,10 @@ import { getErrorMessage } from '../services/api.js'
 import FormField from '../components/FormField.jsx'
 import Button from '../components/Button.jsx'
 import Alert from '../components/Alert.jsx'
+import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 
 export default function LoginPage() {
+  useDocumentTitle('Log in')
   const { login } = useAuth()
   const location = useLocation()
 

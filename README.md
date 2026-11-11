@@ -2,14 +2,14 @@
 
 React frontend for **JobConnect**, a job portal where recruiters post jobs and job seekers search and apply.
 
-> **Status:** Phase 2 (authentication). Register, log in, log out, and role-based dashboards behind protected routes; features are added phase by phase (see [Roadmap](#roadmap)).
+> **Status:** Phase 4 (jobs UI). Accounts with role-based dashboards, job search with filters and pagination, job pages, and recruiter job posting/editing; features are added phase by phase (see [Roadmap](#roadmap)).
 
 Backend repo: [jobconnect-backend](https://github.com/sudhan-murugan/jobconnect-backend)
 
 ## Tech stack
 
 - **React 19** with **Vite** (dev server and build)
-- **React Router** for client-side routing
+- **React Router** for client-side routing (URL search params hold the job search state)
 - **Axios** for HTTP requests (one shared instance in `src/services/api.js`, with a JWT interceptor)
 - **React Context** for auth state (`AuthProvider` + `useAuth()` hook)
 - **Tailwind CSS v4** for responsive styling
@@ -18,23 +18,42 @@ Backend repo: [jobconnect-backend](https://github.com/sudhan-murugan/jobconnect-
 
 ## Features so far
 
-- Sign up as a **job seeker** or a **recruiter**, log in, log out
-- Session survives page reloads (token saved, user restored via `GET /api/auth/me`)
-- Protected routes: logged-out visitors are sent to login, then back to the page they wanted
+**Everyone**
+- Search jobs by keyword and location, filter by job type, page through results
+- Search state lives in the URL (`/jobs?keyword=react&jobType=remote&page=2`): shareable, bookmarkable, and the Back button works
+- Job pages with salary, skills and posting date; "Back to jobs" returns to the same search
+
+**Accounts**
+- Sign up as a **job seeker** or a **recruiter**, log in, log out; session survives page reloads
+- Protected routes send logged-out visitors to login, then back to the page they wanted
 - Role-based routes: each role has its own dashboard; other roles see a 403 page
-- Form validation messages from the API shown under the matching field
-- Expired or invalid tokens log the user out automatically
+
+**Recruiters**
+- Dashboard listing your own job posts
+- Post, edit and delete jobs (with a confirmation dialog); only the job's owner sees Edit/Delete
+- Form errors from the API appear under the matching field
+
+**UI**
+- Loading, empty and error states (with "Try again") on every data view
+- Responsive layout with a mobile menu
+- Page titles per route; scroll position restored on Back
 
 ## Routes
 
-| Path                   | Who can see it         |
-| ---------------------- | ---------------------- |
-| `/`                    | Everyone               |
-| `/login`, `/register`  | Logged-out visitors    |
-| `/seeker/dashboard`    | Job seekers            |
-| `/recruiter/dashboard` | Recruiters             |
+| Path                       | Who can see it                 |
+| -------------------------- | ------------------------------ |
+| `/`                        | Everyone                       |
+| `/jobs`                    | Everyone (search and filters)  |
+| `/jobs/:id`                | Everyone                       |
+| `/login`, `/register`      | Logged-out visitors            |
+| `/seeker/dashboard`        | Job seekers                    |
+| `/recruiter/dashboard`     | Recruiters                     |
+| `/recruiter/jobs/new`      | Recruiters                     |
+| `/recruiter/jobs/:id/edit` | The recruiter who posted the job |
 
-## How auth works
+## How it works
+
+### Auth
 
 1. `LoginPage` / `RegisterPage` call `login()` / `register()` from `useAuth()`.
 2. `AuthProvider` sends the request, saves the returned JWT in `localStorage`, and stores the user in React state.
@@ -44,12 +63,23 @@ Backend repo: [jobconnect-backend](https://github.com/sudhan-murugan/jobconnect-
 
 Route guards only control what the UI shows. The backend enforces the same rules on every request.
 
+### Data fetching
+
+Pages load data with a small custom hook, `useFetch` (`src/hooks/useFetch.js`). It:
+
+- refetches when its inputs change (e.g. the search params),
+- cancels outdated requests with `AbortController`, so a slow old response can never overwrite newer results,
+- keeps the previous results on screen (faded) while the next page loads,
+- exposes `reload()` for "Try again" buttons and for refreshing after a delete.
+
+In a larger app, a library such as TanStack Query would add caching and background refetching on top of this.
+
 ## Getting started
 
 ### Prerequisites
 
 - Node.js 22.22 or newer
-- The [backend](https://github.com/sudhan-murugan/jobconnect-backend) running locally (default `http://localhost:5000`)
+- The [backend](https://github.com/sudhan-murugan/jobconnect-backend) running locally (default `http://localhost:5000`). Run `npm run seed` there for demo data.
 
 ### Setup
 
@@ -62,6 +92,9 @@ npm run dev            # http://localhost:5173
 ```
 
 The footer shows **API online** when the frontend can reach the backend.
+
+**Demo accounts** (after seeding the backend), password `Demo1234`:
+`demo.recruiter@example.com` (recruiter) and `demo.seeker@example.com` (job seeker).
 
 ### Scripts
 
@@ -84,13 +117,14 @@ Vite bakes `VITE_*` variables into the JavaScript bundle at build time, so they 
 
 ```
 src/
-  components/  shared UI (Layout, Navbar, Footer, Button, FormField, Alert, Spinner...)
+  components/  shared UI: layout and navbar, form controls, job cards, filters,
+               pagination, dialogs, loading/empty/error states
   context/     AuthContext + AuthProvider (logged-in user, login/register/logout)
-  hooks/       custom hooks (useAuth)
-  pages/       one component per route (Home, Login, Register, dashboards, 404, 403)
+  hooks/       useAuth, useFetch, useDocumentTitle, useFlashMessage
+  pages/       one component per route (jobs, job detail, post/edit job, dashboards...)
   routes/      route guards (ProtectedRoute, RoleRoute, GuestRoute)
-  services/    api.js (Axios + interceptors), authService.js, tokenStorage.js
-  utils/       roles and helpers
+  services/    api.js (Axios + interceptors), authService.js, jobService.js, tokenStorage.js
+  utils/       roles, job types and formatting helpers
   App.jsx      route definitions
   main.jsx     entry point, mounts <App /> into index.html
 ```
@@ -100,7 +134,7 @@ src/
 1. ✅ Scaffold: Vite + React + React Router, layout, Axios service
 2. ✅ Authentication: register/login pages, AuthContext, protected routes
 3. ✅ Jobs backend (API in the backend repo)
-4. Jobs UI: list, search/filter, detail, recruiter post/edit
+4. ✅ Jobs UI: list, search/filter, detail, recruiter post/edit
 5. Applications: apply, dashboards for job seekers and recruiters
 6. Profile and UI polish
 7. Testing

@@ -1,9 +1,11 @@
 import { Link } from 'react-router'
 import { useAuth } from '../hooks/useAuth.js'
 import { dashboardPathFor } from '../utils/roles.js'
+import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 
 // Shown when a logged-in user opens a page their role can't access (HTTP 403 idea).
 export default function ForbiddenPage() {
+  useDocumentTitle('Access denied')
   const { user } = useAuth()
 
   return (
