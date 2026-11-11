@@ -1,0 +1,5 @@
+/*
+ * Global styles. Tailwind v4 is set up with this single import; utility
+ * classes such as "flex" or "text-slate-900" are then used directly in JSX.
+ */
+@import "tailwindcss";
