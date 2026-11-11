@@ -11,4 +11,11 @@ export default defineConfig({
     // allow-list expects http://localhost:5173.
     strictPort: true,
   },
+  // Vitest (npm test) reuses this config. jsdom simulates a browser in Node,
+  // so components can be rendered and clicked without opening a real browser.
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.js',
+    restoreMocks: true, // undo vi.spyOn()/mocks after every test
+  },
 })

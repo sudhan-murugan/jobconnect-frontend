@@ -1,8 +1,10 @@
 # JobConnect Frontend
 
+[![CI](https://github.com/sudhan-murugan/jobconnect-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/sudhan-murugan/jobconnect-frontend/actions/workflows/ci.yml)
+
 React frontend for **JobConnect**, a job portal where recruiters post jobs and job seekers search and apply.
 
-> **Status:** Phase 6 (profiles and polish). Job search, applying with a PDF resume (or in one click with your profile resume), dashboards for job seekers and recruiters, applicant review, and editable profiles; features are added phase by phase (see [Roadmap](#roadmap)).
+> **Status:** Phase 7 (testing). Job search, applying with a PDF resume (or in one click with your profile resume), dashboards for job seekers and recruiters, applicant review and editable profiles, with automated tests and CI; features are added phase by phase (see [Roadmap](#roadmap)).
 
 Backend repo: [jobconnect-backend](https://github.com/sudhan-murugan/jobconnect-backend)
 
@@ -14,7 +16,7 @@ Backend repo: [jobconnect-backend](https://github.com/sudhan-murugan/jobconnect-
 - **React Context** for auth state (`AuthProvider` + `useAuth()` hook)
 - **Tailwind CSS v4** for responsive styling
 - **ESLint** for linting
-- **Planned:** React Testing Library
+- **Vitest + React Testing Library** for tests; GitHub Actions CI
 
 ## Features so far
 
@@ -130,6 +132,8 @@ The footer shows **API online** when the frontend can reach the backend.
 | `npm run build`   | Production build into `dist/`         |
 | `npm run preview` | Serve the production build locally    |
 | `npm run lint`    | Run ESLint                            |
+| `npm test`        | Run the tests once                    |
+| `npm run test:watch` | Re-run tests on file changes       |
 
 ## Environment variables
 
@@ -138,6 +142,24 @@ The footer shows **API online** when the frontend can reach the backend.
 | `VITE_API_URL` | no       | `http://localhost:5000` | Backend server address (no trailing slash)   |
 
 Vite bakes `VITE_*` variables into the JavaScript bundle at build time, so they are public. Never put secrets in them.
+
+## Testing
+
+```bash
+npm test   # 35 tests, a few seconds
+```
+
+Tests use **Vitest** (Vite's test runner, so it shares this project's config) with **React Testing Library**, which renders components in a simulated browser (jsdom) and interacts with them the way a user would: finding elements by their label or role, typing, clicking.
+
+| Test file | What it checks |
+| --------- | -------------- |
+| `src/routes/routeGuards.test.jsx` | Logged-out visitors are redirected to login (and remembered), the wrong role sees 403, logged-in users skip the login page |
+| `src/pages/LoginPage.test.jsx` | Submits the entered credentials, disables the button while waiting, shows the API's error |
+| `src/components/JobForm.test.jsx` | Converts the form into the API payload, blocks invalid salaries, shows API errors under the right field, pre-fills when editing |
+| `src/components/JobCard.test.jsx` | Shows a job's details, link, skills and salary |
+| `src/utils/jobs.test.js` | Salary/date formatting, skill parsing and resume file checks |
+
+Components get their auth state from a fake `AuthContext` value (`src/test/render.jsx`), so tests don't need the backend. GitHub Actions runs lint, tests and a production build on every push and pull request (`.github/workflows/ci.yml`).
 
 ## Project structure
 
@@ -153,9 +175,12 @@ src/
   services/    api.js (Axios + interceptors), authService.js, jobService.js,
                applicationService.js, userService.js, files.js, tokenStorage.js
   utils/       roles, job types, application statuses and formatting helpers
+  test/        test setup and render helpers
   App.jsx      route definitions
   main.jsx     entry point, mounts <App /> into index.html
 ```
+
+Test files sit next to the code they test, named `*.test.js(x)`.
 
 ## Roadmap
 
@@ -165,6 +190,6 @@ src/
 4. ✅ Jobs UI: list, search/filter, detail, recruiter post/edit
 5. ✅ Applications: apply, dashboards for job seekers and recruiters
 6. ✅ Profile and UI polish
-7. Testing
+7. ✅ Testing: Vitest + React Testing Library, CI
 8. Deployment
 9. Documentation
