@@ -99,7 +99,7 @@ src/
 
 1. ✅ Scaffold: Vite + React + React Router, layout, Axios service
 2. ✅ Authentication: register/login pages, AuthContext, protected routes
-3. Jobs backend
+3. ✅ Jobs backend (API in the backend repo)
 4. Jobs UI: list, search/filter, detail, recruiter post/edit
 5. Applications: apply, dashboards for job seekers and recruiters
 6. Profile and UI polish
