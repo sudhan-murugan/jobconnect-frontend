@@ -3,10 +3,12 @@ import { Link } from 'react-router'
 import { getMyApplications } from '../services/applicationService.js'
 import { useFetch } from '../hooks/useFetch.js'
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
+import { useAuth } from '../hooks/useAuth.js'
 import { formatFullDate, formatPostedDate } from '../utils/jobs.js'
 import DashboardHeader from '../components/DashboardHeader.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import ResumeButton from '../components/ResumeButton.jsx'
+import Alert from '../components/Alert.jsx'
 import { PageLoader } from '../components/Spinner.jsx'
 import { EmptyState, ErrorState } from '../components/StatusMessage.jsx'
 
@@ -20,6 +22,7 @@ const STATS = [
 // Job seeker home: every job they applied to and where each application stands.
 export default function SeekerDashboardPage() {
   useDocumentTitle('Dashboard')
+  const { user } = useAuth()
 
   // No inputs, so the fetcher never changes and loads once on mount.
   const fetchApplications = useCallback((signal) => getMyApplications({}, { signal }), [])
@@ -28,6 +31,16 @@ export default function SeekerDashboardPage() {
   return (
     <div className="space-y-8">
       <DashboardHeader subtitle="Track the jobs you've applied to." />
+
+      {/* Nudge: a saved resume makes applying a one-click action. */}
+      {!user.resume && (
+        <Alert type="info">
+          Add a resume to your profile to apply in one click.{' '}
+          <Link to="/profile" className="font-semibold underline hover:no-underline">
+            Go to your profile
+          </Link>
+        </Alert>
+      )}
 
       {error ? (
         <ErrorState error={error} onRetry={reload} title="We couldn't load your applications" />
@@ -86,7 +99,11 @@ export default function SeekerDashboardPage() {
                       </p>
                     </div>
                     <div className="shrink-0">
-                      <ResumeButton application={application} />
+                      <ResumeButton
+                        url={application.resumeUrl}
+                        filename={application.resume.filename}
+                        size={application.resume.size}
+                      />
                     </div>
                   </li>
                 ))}

@@ -69,11 +69,15 @@ export default function AuthProvider({ children }) {
     setUser(null)
   }, [])
 
+  // After the profile changes (e.g. PUT /api/users/me), store the user the API
+  // returned so the navbar, dashboards etc. show the new details right away.
+  const updateUser = useCallback((updatedUser) => setUser(updatedUser), [])
+
   // useMemo: only create a new value object when something in it changes,
   // otherwise every consumer would re-render on every provider render.
   const value = useMemo(
-    () => ({ user, isAuthenticated: Boolean(user), isLoading, login, register, logout }),
-    [user, isLoading, login, register, logout],
+    () => ({ user, isAuthenticated: Boolean(user), isLoading, login, register, logout, updateUser }),
+    [user, isLoading, login, register, logout, updateUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

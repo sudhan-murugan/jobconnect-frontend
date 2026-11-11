@@ -107,7 +107,11 @@ export default function ApplicantCard({ application, onStatusChange }) {
       )}
 
       <div className="mt-4">
-        <ResumeButton application={application} />
+        <ResumeButton
+          url={application.resumeUrl}
+          filename={application.resume.filename}
+          size={application.resume.size}
+        />
       </div>
     </article>
   )

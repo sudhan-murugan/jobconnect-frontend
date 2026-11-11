@@ -1,15 +1,48 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import Modal from './Modal.jsx'
 import FormField from './FormField.jsx'
 import Button from './Button.jsx'
 import Alert from './Alert.jsx'
 import { applyToJob } from '../services/applicationService.js'
 import { getErrorMessage, getFieldErrors } from '../services/api.js'
-import { COVER_NOTE_MAX, MAX_RESUME_SIZE_MB, validateResumeFile } from '../utils/applications.js'
+import { useAuth } from '../hooks/useAuth.js'
+import { COVER_NOTE_MAX, formatFileSize, MAX_RESUME_SIZE_MB, validateResumeFile } from '../utils/applications.js'
+
+const FILE_INPUT_CLASS =
+  'file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100'
+
+function SourceOption({ value, checked, onChange, disabled, title, detail }) {
+  return (
+    <label
+      className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-focus-visible:ring-2 has-focus-visible:ring-indigo-300 ${
+        checked ? 'border-indigo-600 bg-indigo-50' : 'border-slate-300 hover:border-slate-400'
+      }`}
+    >
+      <input
+        type="radio"
+        name="resumeSource"
+        value={value}
+        checked={checked}
+        onChange={onChange}
+        disabled={disabled}
+        className="mt-1 accent-indigo-600"
+      />
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-slate-900">{title}</span>
+        {detail && <span className="block truncate text-xs text-slate-600">{detail}</span>}
+      </span>
+    </label>
+  )
+}
 
 // The form inside the dialog. Modal only renders it while open, so every time
-// the dialog opens, the form starts empty.
+// the dialog opens, the form starts fresh.
 function ApplyForm({ jobId, onCancel, onApplied, onSubmittingChange }) {
+  const { user } = useAuth()
+  const profileResume = user.resume
+  // Use the profile resume by default when there is one.
+  const [source, setSource] = useState(profileResume ? 'profile' : 'upload')
   const [resume, setResume] = useState(null) // a File object from the file input
   const [coverNote, setCoverNote] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
@@ -27,10 +60,13 @@ function ApplyForm({ jobId, onCancel, onApplied, onSubmittingChange }) {
     event.preventDefault()
     setError('')
 
-    const resumeError = validateResumeFile(resume)
-    if (resumeError) {
-      setFieldErrors({ resume: resumeError })
-      return
+    const useProfileResume = source === 'profile'
+    if (!useProfileResume) {
+      const resumeError = validateResumeFile(resume)
+      if (resumeError) {
+        setFieldErrors({ resume: resumeError })
+        return
+      }
     }
 
     onSubmittingChange(true)
@@ -38,14 +74,17 @@ function ApplyForm({ jobId, onCancel, onApplied, onSubmittingChange }) {
     try {
       const application = await applyToJob(
         jobId,
-        { resume, coverNote: coverNote.trim() },
+        { resume: useProfileResume ? null : resume, useProfileResume, coverNote: coverNote.trim() },
         { onUploadProgress: ({ loaded, total }) => total && setProgress(Math.round((loaded / total) * 100)) },
       )
       onApplied(application)
     } catch (err) {
       const apiErrors = getFieldErrors(err)
       setFieldErrors(apiErrors)
-      setError(Object.keys(apiErrors).length > 0 ? '' : getErrorMessage(err))
+      // With the profile resume there's no file input to show a resume error
+      // under, so it goes in the alert at the top instead.
+      const resumeErrorForAlert = useProfileResume ? apiErrors.resume : undefined
+      setError(resumeErrorForAlert ?? (Object.keys(apiErrors).length > 0 ? '' : getErrorMessage(err)))
       setProgress(null)
     } finally {
       onSubmittingChange(false)
@@ -53,22 +92,56 @@ function ApplyForm({ jobId, onCancel, onApplied, onSubmittingChange }) {
   }
 
   const isSubmitting = progress !== null
+  const fileField = (
+    <FormField
+      label={profileResume ? 'Choose a PDF' : 'Resume (PDF)'}
+      name="resume"
+      type="file"
+      accept="application/pdf,.pdf"
+      onChange={handleFileChange}
+      disabled={isSubmitting}
+      error={fieldErrors.resume}
+      hint={`PDF only, up to ${MAX_RESUME_SIZE_MB} MB.`}
+      inputClassName={FILE_INPUT_CLASS}
+    />
+  )
 
   return (
     <form onSubmit={handleSubmit} className="mt-4 space-y-4">
       {error && <Alert>{error}</Alert>}
 
-      <FormField
-        label="Resume (PDF)"
-        name="resume"
-        type="file"
-        accept="application/pdf,.pdf"
-        onChange={handleFileChange}
-        disabled={isSubmitting}
-        error={fieldErrors.resume}
-        hint={`PDF only, up to ${MAX_RESUME_SIZE_MB} MB.`}
-        inputClassName="file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
-      />
+      {profileResume ? (
+        <fieldset className="space-y-2">
+          <legend className="mb-1 text-sm font-medium text-slate-700">Resume</legend>
+          <SourceOption
+            value="profile"
+            checked={source === 'profile'}
+            onChange={() => setSource('profile')}
+            disabled={isSubmitting}
+            title="Use my profile resume"
+            detail={`${profileResume.filename} (${formatFileSize(profileResume.size)})`}
+          />
+          <SourceOption
+            value="upload"
+            checked={source === 'upload'}
+            onChange={() => setSource('upload')}
+            disabled={isSubmitting}
+            title="Upload a different PDF"
+          />
+          {source === 'upload' && <div className="pt-2">{fileField}</div>}
+        </fieldset>
+      ) : (
+        <div>
+          {fileField}
+          <p className="mt-2 text-xs text-slate-500">
+            Tip:{' '}
+            <Link to="/profile" className="font-medium text-indigo-600 hover:text-indigo-700">
+              save a resume to your profile
+            </Link>{' '}
+            to apply in one click next time.
+          </p>
+        </div>
+      )}
 
       <FormField
         as="textarea"
@@ -96,7 +169,7 @@ function ApplyForm({ jobId, onCancel, onApplied, onSubmittingChange }) {
   )
 }
 
-// "Apply for this job" dialog: resume upload + optional cover note.
+// "Apply for this job" dialog: profile or uploaded resume + optional cover note.
 export default function ApplyDialog({ job, open, onClose, onApplied }) {
   // Tracked here so the dialog can't be closed (Esc) mid-upload.
   const [isSubmitting, setIsSubmitting] = useState(false)

@@ -32,9 +32,14 @@ function NavItems({ user, linkClass, onNavigate, onLogout, isMobile }) {
           <NavLink to={dashboardPathFor(user.role)} className={linkClass} onClick={onNavigate}>
             Dashboard
           </NavLink>
-          <span className={isMobile ? 'block px-3 pt-3 text-sm text-slate-500' : 'hidden text-sm text-slate-500 lg:inline'}>
-            {user.name} · {ROLE_LABELS[user.role]}
-          </span>
+          <NavLink to="/profile" className={linkClass} onClick={onNavigate}>
+            Profile
+          </NavLink>
+          {isMobile && (
+            <p className="px-3 pt-3 text-sm text-slate-500">
+              Signed in as {user.name} · {ROLE_LABELS[user.role]}
+            </p>
+          )}
           <button
             type="button"
             onClick={onLogout}

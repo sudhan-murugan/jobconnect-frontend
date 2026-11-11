@@ -1,9 +1,10 @@
-// Landing page: a job search box plus a short intro.
+// Landing page: a job search box, the latest jobs and a short intro.
 import { createSearchParams, Link, useNavigate } from 'react-router'
 import { useAuth } from '../hooks/useAuth.js'
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 import { dashboardPathFor, ROLES } from '../utils/roles.js'
 import JobSearchForm from '../components/JobSearchForm.jsx'
+import LatestJobs from '../components/LatestJobs.jsx'
 
 const TEXT_LINK = 'font-semibold text-indigo-600 hover:text-indigo-700'
 
@@ -82,7 +83,9 @@ export default function HomePage() {
         )}
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <LatestJobs />
+
+      <section aria-label="How JobConnect works" className="mt-12 grid gap-4 sm:grid-cols-3">
         {FEATURES.map((feature) => (
           // React needs a unique, stable "key" for each item in a list so it
           // can tell items apart when the list changes.

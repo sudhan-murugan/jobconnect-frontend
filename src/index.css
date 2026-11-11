@@ -3,3 +3,24 @@
  * classes such as "flex" or "text-slate-900" are then used directly in JSX.
  */
 @import "tailwindcss";
+
+/* Custom animation for the page-loading bar (see NavigationProgress in Layout.jsx). */
+@keyframes progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+/* Respect users who ask their OS for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -2,7 +2,7 @@
 
 React frontend for **JobConnect**, a job portal where recruiters post jobs and job seekers search and apply.
 
-> **Status:** Phase 5 (applications). Job search, applying with a PDF resume, a job seeker dashboard that tracks every application, and recruiter tools to post jobs and review applicants; features are added phase by phase (see [Roadmap](#roadmap)).
+> **Status:** Phase 6 (profiles and polish). Job search, applying with a PDF resume (or in one click with your profile resume), dashboards for job seekers and recruiters, applicant review, and editable profiles; features are added phase by phase (see [Roadmap](#roadmap)).
 
 Backend repo: [jobconnect-backend](https://github.com/sudhan-murugan/jobconnect-backend)
 
@@ -25,11 +25,13 @@ Backend repo: [jobconnect-backend](https://github.com/sudhan-murugan/jobconnect-
 
 **Accounts**
 - Sign up as a **job seeker** or a **recruiter**, log in, log out; session survives page reloads
+- Profile page: edit name, headline, location and (job seekers) skills; changes appear across the app immediately
 - Protected routes send logged-out visitors to login, then back to the page they wanted
 - Role-based routes: each role has its own dashboard; other roles see a 403 page
 
 **Job seekers**
-- Apply to a job with a PDF resume and an optional cover note, with upload progress
+- Save a resume on your profile (upload, view, replace, remove) and apply in one click with it
+- Or apply with a different PDF and an optional cover note, with upload progress
 - Instant checks for file type and size; the server's checks (e.g. "not a valid PDF") show under the field
 - The job page shows "You applied" with the current status instead of the Apply button
 - Dashboard with totals per status and every application (job, date, status, submitted resume)
@@ -42,9 +44,12 @@ Backend repo: [jobconnect-backend](https://github.com/sudhan-murugan/jobconnect-
 - Form errors from the API appear under the matching field
 
 **UI**
-- Loading, empty and error states (with "Try again") on every data view
-- Responsive layout with a mobile menu
-- Page titles per route; scroll position restored on Back
+- Loading skeletons, empty states and error states (with "Try again") on every data view
+- An error page instead of a blank screen if a page crashes or its code fails to load
+- Each page's code is downloaded only when first visited, with a progress bar during navigation
+- Responsive layout (phone, tablet, desktop) with a mobile menu
+- Accessibility: "Skip to main content" link, labelled form fields, keyboard-friendly dialogs, reduced motion respected
+- Home page with job search and the latest jobs; page titles per route; scroll position restored on Back
 
 ## Routes
 
@@ -54,6 +59,7 @@ Backend repo: [jobconnect-backend](https://github.com/sudhan-murugan/jobconnect-
 | `/jobs`                    | Everyone (search and filters)  |
 | `/jobs/:id`                | Everyone                       |
 | `/login`, `/register`      | Logged-out visitors            |
+| `/profile`                 | Logged-in users                |
 | `/seeker/dashboard`        | Job seekers                    |
 | `/recruiter/dashboard`     | Recruiters                     |
 | `/recruiter/jobs/new`      | Recruiters                     |
@@ -83,10 +89,16 @@ Pages load data with a small custom hook, `useFetch` (`src/hooks/useFetch.js`). 
 
 In a larger app, a library such as TanStack Query would add caching and background refetching on top of this.
 
+### Code splitting and errors
+
+- Every page except Home is loaded with React Router's `lazy` routes (`App.jsx`): its JavaScript is a separate file, downloaded the first time the page is visited. `NavigationProgress` in `Layout.jsx` shows a thin loading bar while that happens.
+- Routes have an `errorElement` (`RouteErrorPage.jsx`): if a page throws while rendering, or its file can't be downloaded (for example after a new deploy), users see a friendly message with "Reload page" instead of a blank screen.
+
 ### Uploading and viewing resumes
 
 - **Upload:** the apply form sends a `FormData` body (`multipart/form-data`), the format browsers use for files. Axios reports upload progress, shown on the submit button.
-- **Viewing:** resumes are private, so the API only serves them with the login token. A normal `<a href>` link can't send that header. Instead, `openResume()` downloads the PDF with Axios as a `Blob`, creates a temporary object URL, and opens it in a new tab. The tab is opened during the click, so pop-up blockers allow it.
+- **Viewing:** resumes are private, so the API only serves them with the login token. A normal `<a href>` link can't send that header. Instead, `openPdfInNewTab()` (`src/services/files.js`) downloads the PDF with Axios as a `Blob`, creates a temporary object URL, and opens it in a new tab. The tab is opened during the click, so pop-up blockers allow it.
+- **Profile resume:** the apply dialog offers "Use my profile resume" when one is saved; the API then copies it into the application.
 
 ## Getting started
 
@@ -135,10 +147,11 @@ src/
                pagination, dialogs, loading/empty/error states
   context/     AuthContext + AuthProvider (logged-in user, login/register/logout)
   hooks/       useAuth, useFetch, useDocumentTitle, useFlashMessage
-  pages/       one component per route (jobs, job detail, post/edit job, applicants, dashboards...)
+  pages/       one component per route (jobs, job detail, post/edit job, applicants,
+               dashboards, profile, error page...)
   routes/      route guards (ProtectedRoute, RoleRoute, GuestRoute)
   services/    api.js (Axios + interceptors), authService.js, jobService.js,
-               applicationService.js, tokenStorage.js
+               applicationService.js, userService.js, files.js, tokenStorage.js
   utils/       roles, job types, application statuses and formatting helpers
   App.jsx      route definitions
   main.jsx     entry point, mounts <App /> into index.html
@@ -151,7 +164,7 @@ src/
 3. ✅ Jobs backend (API in the backend repo)
 4. ✅ Jobs UI: list, search/filter, detail, recruiter post/edit
 5. ✅ Applications: apply, dashboards for job seekers and recruiters
-6. Profile and UI polish
+6. ✅ Profile and UI polish
 7. Testing
 8. Deployment
 9. Documentation

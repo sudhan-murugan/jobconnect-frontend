@@ -9,7 +9,7 @@ import JobTypeFilter from '../components/JobTypeFilter.jsx'
 import JobCard from '../components/JobCard.jsx'
 import Pagination from '../components/Pagination.jsx'
 import Button from '../components/Button.jsx'
-import { PageLoader } from '../components/Spinner.jsx'
+import { JobListSkeleton } from '../components/JobCardSkeleton.jsx'
 import { EmptyState, ErrorState } from '../components/StatusMessage.jsx'
 
 const PAGE_SIZE = 10
@@ -78,7 +78,7 @@ export default function JobsPage() {
       {error ? (
         <ErrorState error={error} onRetry={reload} title="We couldn't load jobs" />
       ) : !data ? (
-        <PageLoader label="Loading jobs…" />
+        <JobListSkeleton count={5} />
       ) : (
         // While the next page loads, keep the old results visible but faded.
         <section aria-busy={isLoading} className={isLoading ? 'opacity-60 transition-opacity' : ''}>
